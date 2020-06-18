@@ -5,6 +5,7 @@ import com.badlogic.gdx.graphics.Color
 import com.badlogic.gdx.graphics.GL20
 import com.badlogic.gdx.graphics.g2d.Batch
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer
+import com.badlogic.gdx.math.Circle
 
 /**
  * @author Pawel Sznura 10/06/2020
@@ -28,5 +29,9 @@ inline fun ShapeRenderer.use(action: () -> Unit) {
     begin(ShapeRenderer.ShapeType.Line)
     action()
     end()
+}
+
+fun ShapeRenderer.circle(c: Circle, segments: Int = 30){
+    circle(c.x,c.y,c.radius, segments)
 }
 
