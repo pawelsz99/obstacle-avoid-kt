@@ -3,10 +3,13 @@ package com.pawelsznuradev.obstacleavoid.screen
 import com.badlogic.gdx.Screen
 import com.badlogic.gdx.graphics.OrthographicCamera
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer
+import com.badlogic.gdx.math.MathUtils
 import com.badlogic.gdx.utils.viewport.FitViewport
 import com.badlogic.gdx.utils.viewport.Viewport
 import com.pawelsznuradev.obstacleavoid.config.GameConfig
+import com.pawelsznuradev.obstacleavoid.entity.Obstacle
 import com.pawelsznuradev.obstacleavoid.entity.Player
+import com.pawelsznuradev.obstacleavoid.utils.GdxArray
 import com.pawelsznuradev.obstacleavoid.utils.clearScreen
 import com.pawelsznuradev.obstacleavoid.utils.debug.DebugCameraController
 import com.pawelsznuradev.obstacleavoid.utils.drawGrid
@@ -23,6 +26,10 @@ class GameScreen : Screen {
     private lateinit var renderer: ShapeRenderer
     private lateinit var player: Player
     private lateinit var debugCameraController: DebugCameraController
+
+    private var obstacleTimer = 0f
+    private val obstacles = GdxArray<Obstacle>()
+    private var alive = true
 
 
     override fun hide() {
@@ -44,23 +51,84 @@ class GameScreen : Screen {
         //position player
         player.setPosition(startPlayerX, 1f)
 
+
     }
 
     override fun render(delta: Float) {
         debugCameraController.handleDebugInput()
         debugCameraController.applyTo(camera)
-        
-        player.update()
 
+        if (alive) {
+            update(delta)
+        }
 
 
         clearScreen()
 
         renderer.projectionMatrix = camera.combined
 
-        renderer.use { player.drawDebug(renderer) }
+        renderer.use {
+            player.drawDebug(renderer)
+            obstacles.forEach { it.drawDebug(renderer) }
+        }
 
         viewport.drawGrid(renderer)
+    }
+
+    private fun update(delta: Float) {
+        player.update()
+        blockPlayerFromLeavingWorld()
+
+        updateObstacles()
+        createNewObstacle(delta)
+
+        if (isPlayerCollidingWithObstacles()) {
+            alive = false
+        }
+    }
+
+    private fun isPlayerCollidingWithObstacles(): Boolean {
+        obstacles.forEach {
+            if (it.isCollidingWith(player)) {
+                return true
+            }
+        }
+        return false
+    }
+
+
+    private fun createNewObstacle(delta: Float) {
+        obstacleTimer += delta
+
+        if (obstacleTimer >= GameConfig.OBSTACLE_SPAWN_TIME) {
+            obstacleTimer = 0f
+
+            //spawn
+            val obstacleX = MathUtils.random(0f + Obstacle.BOUNDS_RADIUS, GameConfig.WORLD_WIDTH - Obstacle.BOUNDS_RADIUS)
+            val obstacle = Obstacle()
+            obstacle.setPosition(obstacleX, GameConfig.WORLD_HEIGHT)
+
+            //add to array
+            obstacles.add(obstacle)
+
+        }
+    }
+
+    private fun updateObstacles() {
+        obstacles.forEach { it.update() }
+    }
+
+
+    private fun blockPlayerFromLeavingWorld() {
+/*        if(player.x < Player.HALF_SIZE){
+            player.x = Player.HALF_SIZE
+        }else if(player.x > GameConfig.WORLD_WIDTH - Player.HALF_SIZE){
+            player.x = GameConfig.WORLD_WIDTH -Player.HALF_SIZE
+        }*/
+
+        player.x = MathUtils.clamp(player.x, Player.HALF_SIZE, GameConfig.WORLD_WIDTH - Player.HALF_SIZE)
+
+
     }
 
     override fun pause() {

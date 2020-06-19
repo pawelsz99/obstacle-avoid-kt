@@ -14,4 +14,6 @@ object GameConfig {
     const val WORLD_CENTER_X = WORLD_WIDTH / 2  //world units
     const val WORLD_CENTER_Y = WORLD_HEIGHT / 2
 
+    const val OBSTACLE_SPAWN_TIME = 0.35f
+
 }
